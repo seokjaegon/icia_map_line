@@ -60,6 +60,7 @@ for (var i = 0; i < pointList.length; i++) {
 }
 if(pointList.length > 0) {
 	map.setBounds(bounds);
+	map.setCenter(new kakao.maps.LatLng(pointList[0].y, pointList[0].x));
 }
 
 if(pathPointList.length > 0) {
