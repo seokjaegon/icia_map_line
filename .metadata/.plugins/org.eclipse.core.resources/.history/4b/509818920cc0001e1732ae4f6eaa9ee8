@@ -17,7 +17,7 @@ import kr.co.icia.mapline.util.kakao.KakaoDirections;
 import kr.co.icia.mapline.util.kakao.KakaoDirections.Route.Section.Road;
 
 public class KakaoApiUtil {
-	private static final String REST_API_KEY = "9e16e889b34d03b2c8982d5043e6050b";
+	private static final String REST_API_KEY = "3963d4acc3e66c56c54f1c5090486820";
 
 	/**
 	 * 키워드 장소 검색

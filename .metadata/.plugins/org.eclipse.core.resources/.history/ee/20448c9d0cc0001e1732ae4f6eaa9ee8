@@ -5,7 +5,7 @@
     <title>자동차 이동경로 표시하기</title>
 </head>
 <body>
-	<script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=62f907aab02429790c946754b7fe07e2"></script>
+	<script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=0ccbdeeeeb4de91d3ca76200d460fd56"></script>
 	<script th:inline="javascript">
 		const fromX = [[${fromPoint?.x}]];
 		const fromY = [[${fromPoint?.y}]];
