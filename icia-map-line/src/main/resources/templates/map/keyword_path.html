@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>지도상에 약국을 마커따라 선 그리기</title>
+
+</head>
+<body>
+	<div id="map" style="width: 100%; height: 350px;"></div>
+	<p>검색 할 약국 이름을 입력해 주세요.
+	<form>
+		<input type="text" name="keyword" th:value="${param.keyword}" /><button>검색</button>
+		<input type="hidden" name="x" value="126.675113024566" /> 
+		<input type="hidden" name="y" value="37.4388938204128" />
+	</form>
+	</p>
+
+	<script type="text/javascript"
+		src="//dapi.kakao.com/v2/maps/sdk.js?appkey=62f907aab02429790c946754b7fe07e2"></script>
+	<script th:inline="javascript">
+	// 버튼을 클릭하면 아래 배열의 좌표들이 모두 보이게 지도 범위를 재설정합니다
+	var pointList = JSON.parse([[${keywordPointList}]])||[];
+	var pathPointList = JSON.parse([[${pathPointList}]])||[];
+	
+</script>
+	<script>
+var mapContainer = document.getElementById('map'), // 지도를 표시할 div 
+    mapOption = { 
+        center: new kakao.maps.LatLng(37.4388938204128, 126.675113024566), // 지도의 중심좌표(인천일보아카데미)
+        level: 3 // 지도의 확대 레벨
+    };
+
+var map = new kakao.maps.Map(mapContainer, mapOption); // 지도를 생성합니다
+ 
+
+
+// 지도를 재설정할 범위정보를 가지고 있을 LatLngBounds 객체를 생성합니다
+var bounds = new kakao.maps.LatLngBounds();  
+
+for (var i = 0; i < pointList.length; i++) {
+	const point = pointList[i];
+	const position = new kakao.maps.LatLng(point.y, point.x);
+    // 배열의 좌표들이 잘 보이게 마커를 지도에 추가합니다
+    const marker =     new kakao.maps.Marker({ position : position, clickable: true});
+    marker.setMap(map);
+    
+    const name = point.name;
+    const phone = point.phone;
+    
+    const infowindow = new kakao.maps.InfoWindow({
+    	content : '<div style="padding:5px;">' +name+'<br/>' +phone+'</div>',
+    	removable : true
+    });
+    
+    kakao.maps.event.addListener(marker, 'click', function() {
+    	infowindow.open(map, marker);
+    });
+    // LatLngBounds 객체에 좌표를 추가합니다
+    bounds.extend(position);
+}
+if(pointList.length > 0) {
+	map.setBounds(bounds);
+}
+
+if(pathPointList.length > 0) {
+	// 선을 구성하는 좌표 배열입니다. 이 좌표들을 이어서 선을 표시합니다
+	var linePath = [];
+	for(var point of pathPointList) {
+		linePath.push(new kakao.maps.LatLng(point.y, point.x));
+	}
+	
+	// 지도에 표시할 선을 생성합니다
+	var polyline = new kakao.maps.Polyline({
+	    path: linePath, // 선을 구성하는 좌표배열 입니다
+	    strokeWeight: 5, // 선의 두께 입니다
+	    strokeColor: 'red', // 선의 색깔입니다
+	    strokeOpacity: 0.7, // 선의 불투명도 입니다 1에서 0 사이의 값이며 0에 가까울수록 투명합니다
+	    strokeStyle: 'solid' // 선의 스타일입니다
+	});
+	// 지도에 선을 표시합니다 
+	polyline.setMap(map);
+}
+
+
+// 지도를 재설정할 범위정보를 가지고 있을 LatLngBounds 객체를 생성합니다
+var bounds = new kakao.maps.LatLngBounds();
+if(fromY != null) {
+	bounds.extend(new kakao.maps.LatLng(fromY, fromX));
+	map.setBounds(bounds);      
+}
+if(toY != null) {
+	bounds.extend(new kakao.maps.LatLng(toY, toX));
+	map.setBounds(bounds);  
+}
+
+var customOverlay;
+// 자동차 그리기!!
+if(fromY != null) {
+	// 커스텀 오버레이에 표시할 내용입니다     
+	// HTML 문자열 또는 Dom Element 입니다 
+	var content = '<img src="/racing-car-303766_640.png" style="width:70px;transform:rotate(40deg)">';
+	
+	// 커스텀 오버레이가 표시될 위치입니다 
+	var position = new kakao.maps.LatLng(fromY, fromX);  
+	
+	// 커스텀 오버레이를 생성합니다
+	customOverlay = new kakao.maps.CustomOverlay({
+	    position: position,
+	    content: content   
+	});
+	
+	// 커스텀 오버레이를 지도에 표시합니다
+	customOverlay.setMap(map);
+}
+
+
+function moveVehicle(point, deg) {
+	var content = '<img src="/racing-car-303766_640.png" style="width:70px;transform:rotate('+(deg-90)+'deg)">';
+	
+	var position = new kakao.maps.LatLng(point.y, point.x);
+	customOverlay.setPosition(position);
+	customOverlay.setContent(content);
+	customOverlay.setMap(map);
+}
+
+var interval, pointIndex;
+function start() {
+	if(pointList.length > 0) {
+		pointIndex = 1;
+		interval = setInterval(function() {
+			var prevPoint = pointList[pointIndex-1];
+			var thisPoint = pointList[pointIndex];
+			
+			var deg = getBearing(prevPoint.x, prevPoint.y,  thisPoint.x, thisPoint.y);
+			
+			moveVehicle(pointList[pointIndex], deg);
+			pointIndex++;
+			if(pointIndex >= pointList.length) {
+				clearInterval(interval);
+			}
+		}, 100);
+	}
+}
+
+function getBearing(x1, y1, x2, y2) {
+    // 라디안으로 변환
+    var radX1 = x1 * Math.PI / 180;
+    var radY1 = y1 * Math.PI / 180;
+    var radX2 = x2 * Math.PI / 180;
+    var radY2 = y2 * Math.PI / 180;
+
+    // 경도 차이
+    var deltaX = radX2 - radX1;
+
+    // 방위각 계산
+    var y = Math.sin(deltaX) * Math.cos(radY2);
+    var x = Math.cos(radY1) * Math.sin(radY2) -
+            Math.sin(radY1) * Math.cos(radY2) * Math.cos(deltaX);
+    var bearing = Math.atan2(y, x) * 180 / Math.PI;
+
+    // 방위각을 0~360도 범위로 조정
+    return (bearing + 360) % 360;
+}
+</script>
+</body>
+</html>
